@@ -1,0 +1,23 @@
+# ==========================================================
+# Proyecto: Software FJ - Gestión de Clientes, Servicios y Reservas
+# Curso: Programación (213023) - UNAD
+# Integrante: Jocsan Ismael Suarez Lugo
+# ==========================================================
+# Este archivo esta dividido en 8 PARTES. Cada parte la puedes
+# subir a GitHub como un commit diferente (o como un archivo aparte).
+# ==========================================================
+
+from abc import ABC, abstractmethod
+from datetime import datetime
+
+
+# ==========================================================
+# PARTE 1: ARCHIVO DE LOGS
+# Cada error o evento importante se guarda en "log.txt"
+# ==========================================================
+def escribir_log(tipo, mensaje):
+    # tipo puede ser "INFO" o "ERROR"
+    fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    archivo = open("log.txt", "a", encoding="utf-8")  # "a" = agregar al final
+    archivo.write(fecha + " | " + tipo + " | " + mensaje + "\n")
+    archivo.close()
