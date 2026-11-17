@@ -267,3 +267,165 @@ class Reserva(Entidad):
         return ("Reserva " + str(self._id) + ": " + self.__cliente.get_nombre() + " -> "
                 + self.__servicio.get_nombre() + " | " + str(self.__horas) + "h | "
                 + self.__estado + " | Total: " + str(self.__total))
+
+
+# ==========================================================
+# PARTE 6: LISTAS INTERNAS (en vez de base de datos)
+# ==========================================================
+clientes = []
+servicios = []
+reservas = []
+
+
+# ==========================================================
+# PARTE 7: FUNCIONES QUE USAN try/except PARA QUE EL PROGRAMA
+# NUNCA SE DETENGA, AUNQUE HAYA ERRORES
+# ==========================================================
+def registrar_cliente(id_cliente, nombre, correo, telefono):
+    try:
+        cliente = Cliente(id_cliente, nombre, correo, telefono)
+    except ClienteInvalidoError as e:
+        print("   [ERROR] " + str(e))
+        escribir_log("ERROR", "Cliente no registrado: " + str(e))
+        return None
+    else:
+        clientes.append(cliente)
+        print("   [OK] " + cliente.describir())
+        escribir_log("INFO", "Cliente registrado: " + nombre)
+        return cliente
+
+
+def agregar_servicio(servicio_creado):
+    servicios.append(servicio_creado)
+    print("   [OK] " + servicio_creado.describir())
+    escribir_log("INFO", "Servicio creado: " + servicio_creado.get_nombre())
+
+
+def crear_servicio_seguro(tipo, *datos):
+    # *datos permite recibir cualquier cantidad de datos
+    try:
+        if tipo == "sala":
+            nuevo = SalaReunion(*datos)
+        elif tipo == "equipo":
+            nuevo = AlquilerEquipo(*datos)
+        elif tipo == "asesoria":
+            nuevo = Asesoria(*datos)
+        else:
+            raise ServicioInvalidoError("Tipo de servicio desconocido: " + tipo)
+    except ErrorFJ as e:
+        print("   [ERROR] " + str(e))
+        escribir_log("ERROR", "Servicio no creado: " + str(e))
+        return None
+    except TypeError as e:
+        # Pasa cuando faltan parametros al crear el objeto
+        print("   [ERROR] Faltan parametros: " + str(e))
+        escribir_log("ERROR", "Parametros faltantes: " + str(e))
+        return None
+    else:
+        agregar_servicio(nuevo)
+        return nuevo
+
+
+def hacer_reserva(id_reserva, cliente, servicio, horas):
+    try:
+        reserva = Reserva(id_reserva, cliente, servicio, horas)
+        reserva.confirmar()
+    except ErrorFJ as e:
+        print("   [ERROR] Reserva fallida: " + str(e))
+        escribir_log("ERROR", "Reserva fallida: " + str(e))
+        return None
+    else:
+        reservas.append(reserva)
+        print("   [OK] " + reserva.describir())
+        return reserva
+
+
+def procesar_seguro(reserva, descuento=0):
+    try:
+        total = reserva.procesar(descuento)
+    except ErrorFJ as e:
+        # e.__cause__ es el error original (encadenamiento)
+        if e.__cause__ is not None:
+            print("   [ERROR] " + str(e) + " | Causa: " + str(e.__cause__))
+        else:
+            print("   [ERROR] " + str(e))
+    else:
+        print("   [OK] Reserva procesada. Total con IVA: $" + str(total))
+
+
+def cancelar_seguro(reserva):
+    try:
+        reserva.cancelar()
+    except ErrorFJ as e:
+        print("   [ERROR] " + str(e))
+        escribir_log("ERROR", "No se pudo cancelar: " + str(e))
+    else:
+        print("   [OK] Reserva cancelada")
+
+
+# ==========================================================
+# PARTE 8: PROGRAMA PRINCIPAL - SIMULACION DE 12 OPERACIONES
+# ==========================================================
+def main():
+    escribir_log("INFO", "===== INICIO DE LA SIMULACION =====")
+
+    print("\n1. Cliente valido")
+    ana = registrar_cliente(1, "Ana Gomez", "ana@correo.com", "3101234567")
+
+    print("\n2. Cliente con correo invalido")
+    registrar_cliente(2, "Luis Perez", "luiscorreo", "3119876543")
+
+    print("\n3. Cliente con nombre vacio")
+    registrar_cliente(3, "", "x@x.com", "3001112233")
+
+    print("\n4. Cliente con telefono invalido")
+    registrar_cliente(4, "Pedro Diaz", "pedro@mail.com", "abc")
+
+    print("\n5. Cliente valido")
+    carlos = registrar_cliente(5, "Carlos Ruiz", "carlos@mail.com", "3205556677")
+
+    print("\n6. Servicios validos (sala, equipo y asesoria)")
+    sala = crear_servicio_seguro("sala", 1, "Sala Ejecutiva", 50000, 10)
+    equipo = crear_servicio_seguro("equipo", 2, "Portatil", 8000, 5)
+    asesoria = crear_servicio_seguro("asesoria", 3, "Asesoria Python", 60000, "Programacion")
+
+    print("\n7. Servicio invalido (precio negativo) y con parametros faltantes")
+    crear_servicio_seguro("sala", 4, "Sala Rota", -100, 5)
+    crear_servicio_seguro("equipo", 5, "Proyector")
+
+    print("\n8. Reservas exitosas")
+    r1 = hacer_reserva(1, ana, sala, 3)
+    r2 = hacer_reserva(2, carlos, equipo, 24)
+    r3 = hacer_reserva(3, ana, asesoria, 2)
+
+    print("\n9. Reservas fallidas (horas incorrectas y cliente inexistente)")
+    hacer_reserva(4, carlos, sala, 20)
+    hacer_reserva(5, None, sala, 2)
+
+    print("\n10. Procesar reservas (una con descuento invalido)")
+    procesar_seguro(r1, 0.10)
+    procesar_seguro(r3, 5)   # descuento invalido -> error encadenado
+    procesar_seguro(r3)      # ahora si funciona
+
+    print("\n11. Cancelaciones (valida y no permitidas)")
+    cancelar_seguro(r1)      # ya procesada -> error
+    cancelar_seguro(r2)      # valida
+    cancelar_seguro(r2)      # ya cancelada -> error
+
+    print("\n12. Servicio no disponible")
+    sala.set_disponible(False)
+    hacer_reserva(6, ana, sala, 1)
+
+    # Resumen final
+    print("\n===== RESUMEN =====")
+    print("Clientes:", len(clientes), "| Servicios:", len(servicios), "| Reservas:", len(reservas))
+    for r in reservas:
+        print("  ", r.describir())
+
+    escribir_log("INFO", "===== FIN DE LA SIMULACION =====")
+    print("\nRevisa el archivo log.txt para ver los errores registrados.")
+
+
+# Esto hace que main() solo corra si ejecutas este archivo directamente
+if __name__ == "__main__":
+    main()
