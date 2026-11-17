@@ -39,6 +39,51 @@ class ServicioInvalidoError(ErrorFJ):
     pass
 
 
+
+# ==========================================================
+# PARTE 3: CLASE ABSTRACTA ENTIDAD Y CLASE CLIENTE
+# Entidad es una clase abstracta: no se puede crear directamente,
+# solo sirve de molde para Cliente, Servicio y Reserva.
+# ==========================================================
+class Entidad(ABC):
+    def __init__(self, id_entidad):
+        self._id = id_entidad
+
+    def get_id(self):
+        return self._id
+
+    @abstractmethod
+    def describir(self):
+        # Las clases hijas estan obligadas a escribir este metodo
+        pass
+
+
+class Cliente(Entidad):
+    def __init__(self, id_cliente, nombre, correo, telefono):
+        super().__init__(id_cliente)
+
+        # Validaciones: si algo esta mal, lanzamos el error
+        if nombre == "" or nombre is None:
+            raise ClienteInvalidoError("El nombre no puede estar vacio")
+        if "@" not in correo or "." not in correo:
+            raise ClienteInvalidoError("El correo '" + correo + "' no es valido")
+        if not telefono.isdigit() or len(telefono) < 7:
+            raise ClienteInvalidoError("El telefono debe tener solo numeros (minimo 7)")
+
+        # Los dos guiones bajos (__) hacen el atributo privado (encapsulacion)
+        self.__nombre = nombre
+        self.__correo = correo
+        self.__telefono = telefono
+
+    def get_nombre(self):
+        return self.__nombre
+
+    def get_correo(self):
+        return self.__correo
+
+    def describir(self):
+        return "Cliente " + str(self._id) + ": " + self.__nombre + " (" + self.__correo + ")"
+
 class ServicioNoDisponibleError(ErrorFJ):
     pass
 
