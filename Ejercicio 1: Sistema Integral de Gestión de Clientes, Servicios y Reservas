@@ -93,6 +93,105 @@ class ReservaInvalidaError(ErrorFJ):
 
 
 class OperacionNoPermitidaError(ErrorFJ):
+
+
+# ==========================================================
+# PARTE 4: CLASE ABSTRACTA SERVICIO Y SUS 3 HIJAS
+# Cada servicio calcula su costo de forma diferente (polimorfismo)
+# ==========================================================
+class Servicio(Entidad):
+    def __init__(self, id_servicio, nombre, precio_hora):
+        super().__init__(id_servicio)
+        if nombre == "":
+            raise ServicioInvalidoError("El servicio necesita un nombre")
+        if precio_hora <= 0:
+            raise ServicioInvalidoError("El precio por hora debe ser mayor a 0")
+        self._nombre = nombre
+        self._precio_hora = precio_hora
+        self._disponible = True
+
+    def get_nombre(self):
+        return self._nombre
+
+    def esta_disponible(self):
+        return self._disponible
+
+    def set_disponible(self, valor):
+        self._disponible = valor
+
+    # Metodos abstractos: cada hijo los escribe a su manera
+    @abstractmethod
+    def validar(self, horas):
+        pass
+
+    @abstractmethod
+    def costo_base(self, horas):
+        pass
+
+    # "Sobrecarga": Python no la tiene como Java, pero se imita con
+    # parametros opcionales. Se puede llamar de 4 formas:
+    #   calcular_costo(2)                         -> solo costo base
+    #   calcular_costo(2, descuento=0.1)          -> con descuento (10%)
+    #   calcular_costo(2, impuesto=0.19)          -> con impuesto (19%)
+    #   calcular_costo(2, 0.1, 0.19)              -> con los dos
+    def calcular_costo(self, horas, descuento=0, impuesto=0):
+        self.validar(horas)
+        if descuento < 0 or descuento >= 1:
+            raise CalculoInconsistenteError("El descuento debe estar entre 0 y 1")
+        if impuesto < 0:
+            raise CalculoInconsistenteError("El impuesto no puede ser negativo")
+        total = self.costo_base(horas) * (1 - descuento) * (1 + impuesto)
+        return round(total, 2)
+
+
+class SalaReunion(Servicio):
+    def __init__(self, id_servicio, nombre, precio_hora, capacidad):
+        super().__init__(id_servicio, nombre, precio_hora)
+        self.__capacidad = capacidad
+
+    def validar(self, horas):
+        if horas < 1 or horas > 12:
+            raise ServicioInvalidoError("La sala se reserva entre 1 y 12 horas")
+
+    def costo_base(self, horas):
+        return self._precio_hora * horas
+
+    def describir(self):
+        return "Sala " + self._nombre + " (capacidad " + str(self.__capacidad) + ")"
+
+
+class AlquilerEquipo(Servicio):
+    def __init__(self, id_servicio, nombre, precio_hora, stock):
+        super().__init__(id_servicio, nombre, precio_hora)
+        self.__stock = stock
+
+    def validar(self, horas):
+        if horas < 1 or horas > 72:
+            raise ServicioInvalidoError("El equipo se alquila entre 1 y 72 horas")
+
+    def costo_base(self, horas):
+        return self._precio_hora * horas
+
+    def describir(self):
+        return "Equipo " + self._nombre + " (stock " + str(self.__stock) + ")"
+
+
+class Asesoria(Servicio):
+    def __init__(self, id_servicio, nombre, precio_hora, especialidad):
+        super().__init__(id_servicio, nombre, precio_hora)
+        self.__especialidad = especialidad
+
+    def validar(self, horas):
+        if horas < 0.5 or horas > 8:
+            raise ServicioInvalidoError("La asesoria dura entre 0.5 y 8 horas")
+
+    def costo_base(self, horas):
+        # La asesoria cuesta 20% mas que el precio normal (ejemplo de polimorfismo)
+        return self._precio_hora * horas * 1.2
+
+    def describir(self):
+        return "Asesoria " + self._nombre + " (" + self.__especialidad + ")"
+
     pass
 
 
