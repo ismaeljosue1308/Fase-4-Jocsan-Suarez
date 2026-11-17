@@ -21,3 +21,35 @@ def escribir_log(tipo, mensaje):
     archivo = open("log.txt", "a", encoding="utf-8")  # "a" = agregar al final
     archivo.write(fecha + " | " + tipo + " | " + mensaje + "\n")
     archivo.close()
+
+# ==========================================================
+# PARTE 2: EXCEPCIONES PERSONALIZADAS
+# Son errores creados por nosotros. Todas heredan de Exception.
+# ==========================================================
+class ErrorFJ(Exception):
+    """Error general del sistema (las demas heredan de esta)"""
+    pass
+
+
+class ClienteInvalidoError(ErrorFJ):
+    pass
+
+
+class ServicioInvalidoError(ErrorFJ):
+    pass
+
+
+class ServicioNoDisponibleError(ErrorFJ):
+    pass
+
+
+class ReservaInvalidaError(ErrorFJ):
+    pass
+
+
+class OperacionNoPermitidaError(ErrorFJ):
+    pass
+
+
+class CalculoInconsistenteError(ErrorFJ):
+    pass
