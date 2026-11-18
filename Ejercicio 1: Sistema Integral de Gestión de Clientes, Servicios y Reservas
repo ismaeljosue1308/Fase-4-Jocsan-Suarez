@@ -2,10 +2,9 @@
 # Proyecto: Software FJ - Gestión de Clientes, Servicios y Reservas
 # Curso: Programación (213023) - UNAD
 # Integrante: Jocsan Ismael Suarez Lugo
+# CE 2961952
 # ==========================================================
-# Este archivo esta dividido en 8 PARTES. Cada parte la puedes
-# subir a GitHub como un commit diferente (o como un archivo aparte).
-# ==========================================================
+
 
 from abc import ABC, abstractmethod
 from datetime import datetime
